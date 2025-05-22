@@ -9,7 +9,7 @@ app = FastAPI()
 db_config = {
     "host": "localhost",
     "user": "root",
-    "password": "abcdefu4849",
+    "password": "my_password",
     "database": "mydb"
 }
 
