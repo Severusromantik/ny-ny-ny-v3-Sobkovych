@@ -2,11 +2,10 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 import mysql.connector
-from datetime import datetime
 
 app = FastAPI()
 
-# ───────────── Конфігурація бази даних ─────────────
+# Конфігурація БД
 db_config = {
     "host": "localhost",
     "user": "root",
@@ -14,8 +13,7 @@ db_config = {
     "database": "mydb"
 }
 
-# ───────────── Моделі ─────────────
-
+# ───────────── МОДЕЛІ ─────────────
 class ExpertiseCategoryBase(BaseModel):
     name: Optional[str]
     description: Optional[str]
@@ -23,18 +21,14 @@ class ExpertiseCategoryBase(BaseModel):
 class ExpertiseCategory(ExpertiseCategoryBase):
     id: int
 
-class SurveySessionBase(BaseModel):
-    User_id: int
-    Quiz_id: int
-    started_at: Optional[datetime]
-    completed_at: Optional[datetime]
-    status: Optional[str]
+class RoleBase(BaseModel):
+    name: str
+    description: Optional[str]
 
-class SurveySession(SurveySessionBase):
+class Role(RoleBase):
     id: int
 
 # ───────────── ENDPOINTS: ExpertiseCategory ─────────────
-
 @app.get("/expertise-categories", response_model=List[ExpertiseCategory])
 def get_expertise_categories():
     conn = mysql.connector.connect(**db_config)
@@ -56,7 +50,7 @@ def create_expertise_category(category: ExpertiseCategoryBase):
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "ExpertiseCategory created"}
+    return {"message": "Expertise category created"}
 
 @app.put("/expertise-categories/{category_id}")
 def update_expertise_category(category_id: int, category: ExpertiseCategoryBase):
@@ -69,7 +63,7 @@ def update_expertise_category(category_id: int, category: ExpertiseCategoryBase)
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "ExpertiseCategory updated"}
+    return {"message": "Expertise category updated"}
 
 @app.delete("/expertise-categories/{category_id}")
 def delete_expertise_category(category_id: int):
@@ -79,52 +73,51 @@ def delete_expertise_category(category_id: int):
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "ExpertiseCategory deleted"}
+    return {"message": "Expertise category deleted"}
 
-# ───────────── ENDPOINTS: SurveySession ─────────────
-
-@app.get("/survey-sessions", response_model=List[SurveySession])
-def get_survey_sessions():
+# ───────────── ENDPOINTS: Role ─────────────
+@app.get("/roles", response_model=List[Role])
+def get_roles():
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM SurveySession")
-    sessions = cursor.fetchall()
+    cursor.execute("SELECT * FROM Role")
+    roles = cursor.fetchall()
     cursor.close()
     conn.close()
-    return sessions
+    return roles
 
-@app.post("/survey-sessions", status_code=201)
-def create_survey_session(session: SurveySessionBase):
+@app.post("/roles", status_code=201)
+def create_role(role: RoleBase):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO SurveySession (User_id, Quiz_id, started_at, completed_at, status) VALUES (%s, %s, %s, %s, %s)",
-        (session.User_id, session.Quiz_id, session.started_at, session.completed_at, session.status)
+        "INSERT INTO Role (name, description) VALUES (%s, %s)",
+        (role.name, role.description)
     )
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "SurveySession created"}
+    return {"message": "Role created"}
 
-@app.put("/survey-sessions/{session_id}")
-def update_survey_session(session_id: int, session: SurveySessionBase):
+@app.put("/roles/{role_id}")
+def update_role(role_id: int, role: RoleBase):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
     cursor.execute(
-        "UPDATE SurveySession SET User_id=%s, Quiz_id=%s, started_at=%s, completed_at=%s, status=%s WHERE id=%s",
-        (session.User_id, session.Quiz_id, session.started_at, session.completed_at, session.status, session_id)
+        "UPDATE Role SET name=%s, description=%s WHERE id=%s",
+        (role.name, role.description, role_id)
     )
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "SurveySession updated"}
+    return {"message": "Role updated"}
 
-@app.delete("/survey-sessions/{session_id}")
-def delete_survey_session(session_id: int):
+@app.delete("/roles/{role_id}")
+def delete_role(role_id: int):
     conn = mysql.connector.connect(**db_config)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM SurveySession WHERE id=%s", (session_id,))
+    cursor.execute("DELETE FROM Role WHERE id=%s", (role_id,))
     conn.commit()
     cursor.close()
     conn.close()
-    return {"message": "SurveySession deleted"}
+    return {"message": "Role deleted"}
